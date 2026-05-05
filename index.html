@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Georges – Lateinisch-Deutsches Handwörterbuch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink:     #1a1612;
+    --paper:   #f7f3ec;
+    --paper2:  #efe9de;
+    --gold:    #8b6914;
+    --gold-lt: #c9a84c;
+    --red:     #8b1a1a;
+    --border:  #c8baa0;
+    --shadow:  rgba(26,22,18,0.12);
+    --serif:   'EB Garamond','Palatino Linotype',serif;
+    --display: 'Cormorant Garamond','Palatino Linotype',serif;
+    --mono:    'Fira Code',monospace;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{font-family:var(--serif);background:var(--paper);color:var(--ink);min-height:100vh;font-size:17px;line-height:1.6;}
+
+  header{background:var(--ink);color:var(--paper);padding:2.2rem 2rem 1.8rem;text-align:center;position:relative;overflow:hidden;}
+  header::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent,transparent 60px,rgba(201,168,76,.06) 60px,rgba(201,168,76,.06) 61px);pointer-events:none;}
+  .header-ornament{color:var(--gold-lt);font-size:1rem;letter-spacing:.4em;text-transform:uppercase;font-family:var(--mono);margin-bottom:.5rem;opacity:.8;}
+  header h1{font-family:var(--display);font-weight:300;font-size:clamp(1.6rem,4vw,2.8rem);letter-spacing:.02em;line-height:1.2;}
+  header h1 em{font-style:italic;color:var(--gold-lt);}
+  .header-sub{margin-top:.5rem;font-size:.85rem;opacity:.55;font-family:var(--mono);letter-spacing:.05em;}
+  .header-rule{margin:1.2rem auto 0;width:120px;height:1px;background:linear-gradient(90deg,transparent,var(--gold-lt),transparent);}
+
+  .search-wrap{position:sticky;top:0;z-index:100;background:var(--paper2);border-bottom:1px solid var(--border);padding:.9rem 1.5rem;display:flex;gap:.6rem;align-items:center;box-shadow:0 2px 12px var(--shadow);}
+  .search-field-wrap{position:relative;flex:1;max-width:640px;margin:0 auto;}
+  .search-icon{position:absolute;left:.9rem;top:50%;transform:translateY(-50%);color:var(--gold);font-size:1.1rem;pointer-events:none;}
+  #suche{width:100%;padding:.65rem 1rem .65rem 2.4rem;font-family:var(--serif);font-size:1.1rem;border:1.5px solid var(--border);border-radius:3px;background:var(--paper);color:var(--ink);outline:none;transition:border-color .2s,box-shadow .2s;}
+  #suche:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(139,105,20,.12);}
+  #suche::placeholder{color:#a09070;font-style:italic;}
+  .search-info{font-size:.8rem;color:#8a7a60;font-family:var(--mono);white-space:nowrap;text-align:right;min-width:90px;}
+
+  #ladescreen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:1.5rem;color:#8a7a60;}
+  .lade-ornament{font-family:var(--display);font-size:3rem;font-style:italic;color:var(--gold);animation:pulse 1.8s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+  #lade-text{font-size:.9rem;font-family:var(--mono);}
+  #lade-fortschritt{width:280px;height:3px;background:var(--border);border-radius:2px;overflow:hidden;}
+  #lade-balken{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-lt));width:0%;transition:width .4s;border-radius:2px;}
+
+  #app{display:none;}
+  .layout{display:grid;grid-template-columns:320px 1fr;min-height:calc(100vh - 130px);}
+
+  #liste-wrap{border-right:1px solid var(--border);overflow-y:auto;height:calc(100vh - 118px);position:sticky;top:60px;}
+  .liste-kopf{padding:.7rem 1rem;background:var(--paper2);border-bottom:1px solid var(--border);font-size:.78rem;font-family:var(--mono);color:#7a6a50;display:flex;justify-content:space-between;align-items:center;}
+  #treffer-liste{list-style:none;}
+  .treffer-item{padding:.55rem 1rem .5rem;border-bottom:1px solid rgba(200,186,160,.3);cursor:pointer;transition:background .12s;display:flex;align-items:baseline;gap:.5rem;}
+  .treffer-item:hover{background:rgba(139,105,20,.07);}
+  .treffer-item.aktiv{background:rgba(139,105,20,.13);border-left:3px solid var(--gold);padding-left:calc(1rem - 3px);}
+  .treffer-lemma{font-family:var(--display);font-style:italic;font-size:1.05rem;color:var(--red);flex-shrink:0;}
+  .treffer-vorschau{font-size:.78rem;color:#8a7a60;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+  .mehr-btn{display:block;width:100%;padding:.8rem;text-align:center;background:none;border:none;border-top:1px solid var(--border);color:var(--gold);font-family:var(--serif);font-size:.9rem;cursor:pointer;font-style:italic;}
+  .mehr-btn:hover{background:rgba(139,105,20,.05);}
+
+  #artikel-wrap{padding:2.5rem 3rem 4rem;max-width:800px;overflow-y:auto;height:calc(100vh - 118px);}
+  .start-hinweis{display:flex;flex-direction:column;align-items:center;justify-content:center;height:70%;color:#a09070;text-align:center;gap:1rem;}
+  .start-zitat{font-family:var(--display);font-size:1.6rem;font-style:italic;color:var(--gold);line-height:1.4;}
+  .start-info{font-size:.85rem;font-family:var(--mono);}
+
+  .artikel-header{border-bottom:1px solid var(--border);padding-bottom:1rem;margin-bottom:1.5rem;}
+  .artikel-lemma{font-family:var(--display);font-size:2.2rem;font-style:italic;color:var(--red);line-height:1.2;}
+  .artikel-id{font-family:var(--mono);font-size:.72rem;color:#b0a080;margin-top:.3rem;}
+  .artikel-permalink{font-family:var(--mono);font-size:.72rem;color:var(--gold);text-decoration:none;margin-left:.8rem;cursor:pointer;}
+  .artikel-permalink:hover{text-decoration:underline;}
+  .artikel-text{line-height:1.75;}
+  .artikel-text p{margin-bottom:.9rem;text-align:justify;hyphens:auto;}
+  .artikel-text b{font-weight:600;color:var(--ink);}
+  .artikel-text i{font-style:italic;color:#4a4035;}
+  .kopiert-msg{display:inline-block;font-family:var(--mono);font-size:.72rem;color:var(--gold);margin-left:.5rem;opacity:0;transition:opacity .3s;}
+  .kopiert-msg.sichtbar{opacity:1;}
+  .keine-treffer{padding:3rem 1rem;text-align:center;color:#a09070;font-style:italic;font-family:var(--display);font-size:1.1rem;}
+
+  #liste-wrap::-webkit-scrollbar,#artikel-wrap::-webkit-scrollbar{width:5px;}
+  #liste-wrap::-webkit-scrollbar-track,#artikel-wrap::-webkit-scrollbar-track{background:transparent;}
+  #liste-wrap::-webkit-scrollbar-thumb,#artikel-wrap::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+
+  footer{background:var(--ink);color:rgba(247,243,236,.45);text-align:center;padding:1rem;font-size:.75rem;font-family:var(--mono);letter-spacing:.04em;}
+
+  @media(max-width:700px){
+    .layout{grid-template-columns:1fr;}
+    #liste-wrap{height:40vh;position:static;}
+    #artikel-wrap{height:auto;padding:1.5rem 1.2rem;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-ornament">&#9670; K. E. Georges &#9670;</div>
+  <h1><em>Ausführliches</em> Lateinisch-Deutsches Handwörterbuch</h1>
+  <div class="header-sub">8. Auflage · Hannover 1913 · gemeinfrei</div>
+  <div class="header-rule"></div>
+</header>
+
+<div class="search-wrap">
+  <div class="search-field-wrap">
+    <span class="search-icon">&#9906;</span>
+    <input type="search" id="suche" placeholder="Lateinisches Wort suchen … (z.B. amor, vita, pax)" autocomplete="off" autocorrect="off" spellcheck="false">
+  </div>
+  <div class="search-info" id="such-info">wird geladen…</div>
+</div>
+
+<div id="ladescreen">
+  <div class="lade-ornament">G</div>
+  <div id="lade-text">Wörterbuch wird geladen …</div>
+  <div id="lade-fortschritt"><div id="lade-balken"></div></div>
+</div>
+
+<div id="app">
+  <div class="layout">
+    <div id="liste-wrap">
+      <div class="liste-kopf">
+        <span id="treffer-anzahl">…</span>
+        <span>Treffer</span>
+      </div>
+      <ul id="treffer-liste"></ul>
+    </div>
+    <div id="artikel-wrap">
+      <div class="start-hinweis" id="start-hinweis">
+        <div class="start-zitat">Quaerite et invenietis.</div>
+        <div class="start-info">Sucht, und ihr werdet finden.<br>Bitte oben ein lateinisches Wort eingeben.</div>
+      </div>
+      <div id="artikel-inhalt" style="display:none;"></div>
+    </div>
+  </div>
+</div>
+
+<footer>Karl Ernst Georges · Ausführliches Lateinisch-Deutsches Handwörterbuch · 1913 · Gemeinfrei / Public Domain</footer>
+
+<script>
+// ── Konfiguration ───────────────────────────────────────
+// Dateien, die geladen werden (lokal oder auf GitHub Pages)
+const TEIL_DATEIEN = [
+  "georges_teil1.json",
+  "georges_teil2.json",
+  "georges_teil3.json",
+  "georges_teil4.json",
+];
+
+// ── Zustand ─────────────────────────────────────────────
+let EINTRAEGE = [];
+let SICHTBARE = [];
+let SEITE     = 0;
+const PRO_SEITE = 80;
+let AKTIV_ID  = null;
+
+// ── Daten laden ─────────────────────────────────────────
+async function ladeDaten() {
+  const balken = document.getElementById("lade-balken");
+  const text   = document.getElementById("lade-text");
+
+  try {
+    for (let i = 0; i < TEIL_DATEIEN.length; i++) {
+      const datei = TEIL_DATEIEN[i];
+      const prozent = Math.round((i / TEIL_DATEIEN.length) * 85);
+      balken.style.width = prozent + "%";
+      text.textContent = "Lade Teil " + (i+1) + " von " + TEIL_DATEIEN.length + " …";
+
+      const r = await fetch(datei);
+      if (!r.ok) throw new Error("Datei nicht gefunden: " + datei);
+      const teil = await r.json();
+      EINTRAEGE = EINTRAEGE.concat(teil.eintraege);
+    }
+
+    balken.style.width = "95%";
+    text.textContent = "Sortiere " + EINTRAEGE.length.toLocaleString("de") + " Einträge …";
+
+    // Sicherstellen dass alphabetisch sortiert
+    EINTRAEGE.sort((a, b) => a.sortierschluessel.localeCompare(b.sortierschluessel));
+
+    balken.style.width = "100%";
+
+    setTimeout(() => {
+      document.getElementById("ladescreen").style.display = "none";
+      document.getElementById("app").style.display = "block";
+      document.getElementById("such-info").textContent =
+        EINTRAEGE.length.toLocaleString("de") + " Einträge";
+      document.getElementById("suche").focus();
+
+      const hash = window.location.hash.slice(1);
+      if (hash) {
+        const e = EINTRAEGE.find(e => e.id === hash);
+        if (e) { zeigeListe([e], 1); zeigeArtikel(e); return; }
+      }
+      SICHTBARE = EINTRAEGE;
+      zeigeListe(EINTRAEGE.slice(0, PRO_SEITE), EINTRAEGE.length);
+    }, 200);
+
+  } catch(err) {
+    text.textContent = "Fehler: " + err.message;
+    balken.style.background = "#8b1a1a";
+    console.error(err);
+  }
+}
+
+// ── Suche ────────────────────────────────────────────────
+function norm(s) {
+  return s.replace(/ā/g,"a").replace(/ē/g,"e").replace(/ī/g,"i")
+          .replace(/ō/g,"o").replace(/ū/g,"u")
+          .replace(/Ā/g,"a").replace(/Ē/g,"e").replace(/Ī/g,"i")
+          .replace(/Ō/g,"o").replace(/Ū/g,"u");
+}
+
+function suche(query) {
+  query = query.trim().toLowerCase();
+  if (!query) {
+    SICHTBARE = EINTRAEGE;
+    SEITE = 0;
+    zeigeListe(EINTRAEGE.slice(0, PRO_SEITE), EINTRAEGE.length);
+    return;
+  }
+  const q = norm(query);
+  const exakt = [], prefix = [], irgendwo = [];
+  for (const e of EINTRAEGE) {
+    const ls = norm(e.sortierschluessel);
+    if (ls === q)              exakt.push(e);
+    else if (ls.startsWith(q)) prefix.push(e);
+    else if (norm(e.volltext.toLowerCase()).slice(0,600).includes(q)) irgendwo.push(e);
+  }
+  SICHTBARE = [...exakt, ...prefix, ...irgendwo];
+  SEITE = 0;
+  zeigeListe(SICHTBARE.slice(0, PRO_SEITE), SICHTBARE.length);
+}
+
+// ── Liste rendern ────────────────────────────────────────
+function zeigeListe(eintraege, gesamt) {
+  const liste = document.getElementById("treffer-liste");
+  const anzEl = document.getElementById("treffer-anzahl");
+  if (gesamt !== undefined) anzEl.textContent = gesamt.toLocaleString("de");
+  if (SEITE === 0) liste.innerHTML = "";
+
+  if (eintraege.length === 0) {
+    liste.innerHTML = '<li class="keine-treffer">Kein Eintrag gefunden.</li>';
+    return;
+  }
+
+  const frag = document.createDocumentFragment();
+  for (const e of eintraege) {
+    const li = document.createElement("li");
+    li.className = "treffer-item" + (e.id === AKTIV_ID ? " aktiv" : "");
+    li.dataset.id = e.id;
+    li.innerHTML =
+      '<span class="treffer-lemma">' + esc(e.lemma_sauber) + '</span>' +
+      '<span class="treffer-vorschau">' + esc((e.kurzdefinition||"").slice(0,55)) + '</span>';
+    li.addEventListener("click", () => {
+      document.querySelectorAll(".treffer-item.aktiv")
+        .forEach(el => el.classList.remove("aktiv"));
+      li.classList.add("aktiv");
+      zeigeArtikel(e);
+    });
+    frag.appendChild(li);
+  }
+
+  const bisher = (SEITE + 1) * PRO_SEITE;
+  if (gesamt !== undefined && bisher < gesamt) {
+    const btn = document.createElement("button");
+    btn.className = "mehr-btn";
+    btn.textContent = "Weitere " + Math.min(PRO_SEITE, gesamt - bisher).toLocaleString("de") + " laden …";
+    btn.addEventListener("click", () => {
+      SEITE++;
+      btn.remove();
+      zeigeListe(SICHTBARE.slice(SEITE * PRO_SEITE, (SEITE+1) * PRO_SEITE));
+    });
+    frag.appendChild(btn);
+  }
+  liste.appendChild(frag);
+}
+
+// ── Artikel anzeigen ─────────────────────────────────────
+function zeigeArtikel(e) {
+  AKTIV_ID = e.id;
+  document.getElementById("start-hinweis").style.display = "none";
+  const wrap = document.getElementById("artikel-inhalt");
+  wrap.style.display = "block";
+  history.replaceState(null, "", "#" + e.id);
+
+  wrap.innerHTML =
+    '<div class="artikel-header">' +
+      '<div class="artikel-lemma">' + esc(e.lemma_sauber) + '</div>' +
+      '<div class="artikel-id">' + e.id +
+        '<a class="artikel-permalink" href="#' + esc(e.id) + '" onclick="kopiereLink(event,this)">⚓ Link kopieren</a>' +
+        '<span class="kopiert-msg" id="kopiert-msg">✓ Kopiert!</span>' +
+      '</div>' +
+    '</div>' +
+    '<div class="artikel-text">' + (e.html || '<p>' + esc(e.volltext) + '</p>') + '</div>';
+
+  document.getElementById("artikel-wrap").scrollTop = 0;
+}
+
+function kopiereLink(ev, el) {
+  ev.preventDefault();
+  const url = window.location.href.split("#")[0] + el.getAttribute("href");
+  navigator.clipboard.writeText(url).then(() => {
+    const msg = document.getElementById("kopiert-msg");
+    msg.classList.add("sichtbar");
+    setTimeout(() => msg.classList.remove("sichtbar"), 2000);
+  });
+}
+
+function esc(s) {
+  return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+let suchTimer;
+document.getElementById("suche").addEventListener("input", e => {
+  clearTimeout(suchTimer);
+  suchTimer = setTimeout(() => suche(e.target.value), 200);
+});
+
+ladeDaten();
+</script>
+</body>
+</html>
